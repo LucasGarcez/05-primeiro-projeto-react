@@ -25,6 +25,7 @@ interface Repository {
 interface Issue {
   id: number;
   title: string;
+  html_url: string;
   user: {
     login: string;
   };
@@ -85,13 +86,15 @@ const Repository: React.FC = () => {
       )}
 
       <Issue>
-        <Link key="item-key" to="/repository">
-          <div>
-            <strong>issue title</strong>
-            <p>issue description</p>
-          </div>
-          <FiChevronRight size={20} />
-        </Link>
+        {issues.map((issue) => (
+          <a key={issue.id} href={issue.html_url}>
+            <div>
+              <strong>{issue.title}</strong>
+              <p>{issue.user.login}</p>
+            </div>
+            <FiChevronRight size={20} />
+          </a>
+        ))}
       </Issue>
     </>
   );
