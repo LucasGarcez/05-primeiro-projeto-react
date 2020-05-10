@@ -61,11 +61,11 @@ const Dashboard: React.FC = () => {
     if (data && data.repository) {
       setRepositories((repos) => [...repos, data.repository]);
     }
-  }, [data]);
 
-  if (error) {
-    setInputError('Erro ao buscar repositório');
-  }
+    if (error) {
+      setInputError('Erro ao buscar repositório');
+    }
+  }, [data, error]);
 
   async function handleAddRepository(
     event: FormEvent<HTMLFormElement>,
@@ -95,7 +95,7 @@ const Dashboard: React.FC = () => {
         <input
           value={newRepo}
           onChange={(event) => setNewRepo(event.target.value)}
-          placeholder="Digite o nome do repositório"
+          placeholder="Digite autor/nome do repositório. Ex: facebook/react"
         />
         <button type="submit">Pesquisar</button>
       </Form>
