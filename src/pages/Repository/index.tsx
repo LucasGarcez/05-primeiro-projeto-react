@@ -22,14 +22,12 @@ const REPOSITORY_WITH_ISSUES = gql`
         avatarUrl
       }
       issues(last: 5) {
-        edges {
-          node {
-            id
-            title
-            url
-            author {
-              login
-            }
+        nodes {
+          id
+          title
+          url
+          author {
+            login
           }
         }
       }
@@ -37,35 +35,53 @@ const REPOSITORY_WITH_ISSUES = gql`
   }
 `;
 
-interface RepositoryParams {
-  repository: string;
+interface RepositoryVars {
+  owner: string;
+  name: string;
 }
-
+interface RepositoryData {
+  repository: Repository;
+}
 interface Repository {
+  id: string;
   nameWithOwner: string;
+  stargazers: {
+    totalCount: number;
+  };
+  forkCount: number;
   description: string;
   owner: {
     login: string;
     avatarUrl: string;
   };
-}
-
-interface Issue {
-  id: number;
-  title: string;
-  html_url: string;
-  user: {
-    login: string;
+  issues: {
+    nodes: IssueNode[];
   };
 }
 
+interface IssueNode {
+  node: {
+    id: string;
+    title: string;
+    url: string;
+    author: {
+      login: string;
+    };
+  };
+}
+
+interface RepositoryParams {
+  repository: string;
+}
 const Repository: React.FC = () => {
   const [repository, setRepository] = useState<Repository | null>(null);
   const [issues, setIssues] = useState<Issue[]>([]);
 
   const { params } = useRouteMatch<RepositoryParams>();
 
-  const { loading, error, data } = useQuery();
+  const { loading, error, data } = useQuery<RepositoryData, RepositoryVars>(
+    REPOSITORY_WITH_ISSUES,
+  );
 
   // useEffect(() => {
   //   api.get(`repos/${params.repository}`).then((response) => {
