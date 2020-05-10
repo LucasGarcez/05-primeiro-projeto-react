@@ -1,24 +1,52 @@
 import React, { useEffect, useState } from 'react';
 import { useRouteMatch, Link } from 'react-router-dom';
 import { FiChevronLeft, FiChevronRight } from 'react-icons/fi';
+import { gql } from 'apollo-boost';
+import { useQuery } from '@apollo/react-hooks';
 
 import { Header, RepositoryInfo, Issue } from './styles';
-import api from '../../services/api';
 import logo from '../../assets/logo.svg';
+
+const REPOSITORY_WITH_ISSUES = gql`
+  query REPOSITORY_WITH_ISSUES($owner: String!, $name: String!) {
+    repository(owner: $owner, name: $name) {
+      id
+      nameWithOwner
+      stargazers {
+        totalCount
+      }
+      forkCount
+      description
+      owner {
+        login
+        avatarUrl
+      }
+      issues(last: 5) {
+        edges {
+          node {
+            id
+            title
+            url
+            author {
+              login
+            }
+          }
+        }
+      }
+    }
+  }
+`;
 
 interface RepositoryParams {
   repository: string;
 }
 
 interface Repository {
-  full_name: string;
+  nameWithOwner: string;
   description: string;
-  stargazers_count: number;
-  forks_count: number;
-  open_issues_count: number;
   owner: {
     login: string;
-    avatar_url: string;
+    avatarUrl: string;
   };
 }
 
@@ -37,14 +65,16 @@ const Repository: React.FC = () => {
 
   const { params } = useRouteMatch<RepositoryParams>();
 
-  useEffect(() => {
-    api.get(`repos/${params.repository}`).then((response) => {
-      setRepository(response.data);
-    });
-    api.get(`repos/${params.repository}/issues`).then((response) => {
-      setIssues(response.data);
-    });
-  }, [params.repository]);
+  const { loading, error, data } = useQuery();
+
+  // useEffect(() => {
+  //   api.get(`repos/${params.repository}`).then((response) => {
+  //     setRepository(response.data);
+  //   });
+  //   api.get(`repos/${params.repository}/issues`).then((response) => {
+  //     setIssues(response.data);
+  //   });
+  // }, [params.repository]);
 
   return (
     <>

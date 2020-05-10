@@ -8,7 +8,7 @@ import { Title, Form, Repositories, Error } from './styles';
 import logo from '../../assets/logo.svg';
 
 const REPOSITORY = gql`
-  query Repository($owner: String!, $name: String!) {
+  query REPOSITORY($owner: String!, $name: String!) {
     repository(owner: $owner, name: $name) {
       nameWithOwner
       description
