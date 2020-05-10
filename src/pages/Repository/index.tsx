@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React from 'react';
 import { useRouteMatch, Link } from 'react-router-dom';
 import { FiChevronLeft, FiChevronRight } from 'react-icons/fi';
 import { gql } from 'apollo-boost';
@@ -22,6 +22,7 @@ const REPOSITORY_WITH_ISSUES = gql`
         avatarUrl
       }
       issues(last: 5) {
+        totalCount
         nodes {
           id
           title
@@ -55,18 +56,17 @@ interface Repository {
     avatarUrl: string;
   };
   issues: {
+    totalCount: number;
     nodes: IssueNode[];
   };
 }
 
 interface IssueNode {
-  node: {
-    id: string;
-    title: string;
-    url: string;
-    author: {
-      login: string;
-    };
+  id: string;
+  title: string;
+  url: string;
+  author: {
+    login: string;
   };
 }
 
@@ -74,23 +74,27 @@ interface RepositoryParams {
   repository: string;
 }
 const Repository: React.FC = () => {
-  const [repository, setRepository] = useState<Repository | null>(null);
-  const [issues, setIssues] = useState<Issue[]>([]);
-
   const { params } = useRouteMatch<RepositoryParams>();
+  const [owner, name] = params.repository.split('/');
 
   const { loading, error, data } = useQuery<RepositoryData, RepositoryVars>(
     REPOSITORY_WITH_ISSUES,
+    {
+      variables: {
+        owner,
+        name,
+      },
+    },
   );
 
-  // useEffect(() => {
-  //   api.get(`repos/${params.repository}`).then((response) => {
-  //     setRepository(response.data);
-  //   });
-  //   api.get(`repos/${params.repository}/issues`).then((response) => {
-  //     setIssues(response.data);
-  //   });
-  // }, [params.repository]);
+  if (loading) {
+    return <p>Loading...</p>;
+  }
+  if (error) {
+    return <p>Error! {error.message}</p>;
+  }
+  const { repository } = data as RepositoryData;
+  const { issues } = repository;
 
   return (
     <>
@@ -101,42 +105,36 @@ const Repository: React.FC = () => {
           Voltar
         </Link>
       </Header>
-
-      {repository && (
-        <RepositoryInfo>
-          <header>
-            <img
-              src={repository.owner.avatar_url}
-              alt={repository.owner.login}
-            />
-            <div>
-              <strong>{repository.full_name}</strong>
-              <p>{repository.description}</p>
-            </div>
-          </header>
-          <ul>
-            <li>
-              <strong>{repository.stargazers_count}</strong>
-              <span>Stars</span>
-            </li>
-            <li>
-              <strong>{repository.forks_count}</strong>
-              <span>Forks</span>
-            </li>
-            <li>
-              <strong>{repository.open_issues_count}</strong>
-              <span>Open Issues</span>
-            </li>
-          </ul>
-        </RepositoryInfo>
-      )}
+      <RepositoryInfo>
+        <header>
+          <img src={repository.owner.avatarUrl} alt={repository.owner.login} />
+          <div>
+            <strong>{repository.nameWithOwner}</strong>
+            <p>{repository.description}</p>
+          </div>
+        </header>
+        <ul>
+          <li>
+            <strong>{repository.stargazers.totalCount}</strong>
+            <span>Stars</span>
+          </li>
+          <li>
+            <strong>{repository.forkCount}</strong>
+            <span>Forks</span>
+          </li>
+          <li>
+            <strong>{issues.totalCount}</strong>
+            <span>Issues</span>
+          </li>
+        </ul>
+      </RepositoryInfo>
 
       <Issue>
-        {issues.map((issue) => (
-          <a key={issue.id} href={issue.html_url}>
+        {issues.nodes.map((issue) => (
+          <a key={issue.id} href={issue.url}>
             <div>
               <strong>{issue.title}</strong>
-              <p>{issue.user.login}</p>
+              <p>{issue.author.login}</p>
             </div>
             <FiChevronRight size={20} />
           </a>
