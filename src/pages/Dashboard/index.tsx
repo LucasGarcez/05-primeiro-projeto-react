@@ -1,22 +1,40 @@
-import React, { useState, useEffect, FormEvent } from 'react';
+import React, { useState, useEffect, FormEvent, useMemo } from 'react';
 import { FiChevronRight } from 'react-icons/fi';
 import { Link } from 'react-router-dom';
+import { useQuery, useLazyQuery } from '@apollo/react-hooks';
+import { gql } from 'apollo-boost';
 
 import api from '../../services/api';
 import { Title, Form, Repositories, Error } from './styles';
 import logo from '../../assets/logo.svg';
 
 interface Repository {
-  full_name: string;
+  nameWithOwner: string;
   description: string;
   owner: {
     login: string;
-    avatar_url: string;
+    avatarUrl: string;
   };
 }
 
+const REPOSITORY = gql`
+  query Repository($owner: String!, $name: String!) {
+    repository(owner: $owner, name: $name) {
+      nameWithOwner
+      description
+      owner {
+        login
+        avatarUrl
+      }
+    }
+  }
+`;
+
 const Dashboard: React.FC = () => {
   const [newRepo, setNewRepo] = useState('');
+  // const [owner, setOwner] = useState('');
+  // const [name, setName] = useState('');
+
   const [inputError, setInputError] = useState('');
   const [repositories, setRepositories] = useState<Repository[]>(() => {
     const storageRepositories = localStorage.getItem(
@@ -25,12 +43,24 @@ const Dashboard: React.FC = () => {
     return storageRepositories ? JSON.parse(storageRepositories) : [];
   });
 
+  const [getRepository, { error, data }] = useLazyQuery(REPOSITORY);
+
   useEffect(() => {
     localStorage.setItem(
       '@GithubExplorer:repositories',
       JSON.stringify(repositories),
     );
   }, [repositories]);
+
+  useMemo(() => {
+    if (data && data.repository) {
+      setRepositories((repos) => [...repos, data.repository]);
+    }
+  }, [data]);
+
+  if (error) {
+    setInputError('Erro ao buscar repositório');
+  }
 
   async function handleAddRepository(
     event: FormEvent<HTMLFormElement>,
@@ -42,16 +72,14 @@ const Dashboard: React.FC = () => {
       return;
     }
 
-    try {
-      const response = await api.get<Repository>(`repos/${newRepo}`);
-      const repository = response.data;
+    const [owner, name] = newRepo.split('/');
 
-      setRepositories([...repositories, repository]);
-      setNewRepo('');
-      setInputError('');
-    } catch (error) {
-      setInputError('Erro ao buscar repositório');
-    }
+    getRepository({
+      variables: {
+        owner,
+        name,
+      },
+    });
   }
 
   return (
@@ -70,15 +98,15 @@ const Dashboard: React.FC = () => {
       <Repositories>
         {repositories.map((repository) => (
           <Link
-            key={repository.full_name}
-            to={`/repository/${repository.full_name}`}
+            key={repository.nameWithOwner}
+            to={`/repository/${repository.nameWithOwner}`}
           >
             <img
-              src={repository.owner.avatar_url}
+              src={repository.owner.avatarUrl}
               alt={repository.owner.login}
             />
             <div>
-              <strong>{repository.full_name}</strong>
+              <strong>{repository.nameWithOwner}</strong>
               <p>{repository.description}</p>
             </div>
             <FiChevronRight size={20} />
