@@ -1,10 +1,9 @@
 import React, { useState, useEffect, FormEvent, useMemo } from 'react';
 import { FiChevronRight } from 'react-icons/fi';
 import { Link } from 'react-router-dom';
-import { useQuery, useLazyQuery } from '@apollo/react-hooks';
+import { useLazyQuery } from '@apollo/react-hooks';
 import { gql } from 'apollo-boost';
 
-import api from '../../services/api';
 import { Title, Form, Repositories, Error } from './styles';
 import logo from '../../assets/logo.svg';
 
@@ -32,9 +31,6 @@ const REPOSITORY = gql`
 
 const Dashboard: React.FC = () => {
   const [newRepo, setNewRepo] = useState('');
-  // const [owner, setOwner] = useState('');
-  // const [name, setName] = useState('');
-
   const [inputError, setInputError] = useState('');
   const [repositories, setRepositories] = useState<Repository[]>(() => {
     const storageRepositories = localStorage.getItem(
