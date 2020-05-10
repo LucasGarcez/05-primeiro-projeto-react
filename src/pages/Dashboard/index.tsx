@@ -60,10 +60,11 @@ const Dashboard: React.FC = () => {
   useMemo(() => {
     if (data && data.repository) {
       setRepositories((repos) => [...repos, data.repository]);
+      setInputError('');
     }
 
     if (error) {
-      setInputError('Erro ao buscar repositório');
+      setInputError('Repositório não encontrado');
     }
   }, [data, error]);
 
