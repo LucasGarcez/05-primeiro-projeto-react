@@ -7,15 +7,6 @@ import { gql } from 'apollo-boost';
 import { Title, Form, Repositories, Error } from './styles';
 import logo from '../../assets/logo.svg';
 
-interface Repository {
-  nameWithOwner: string;
-  description: string;
-  owner: {
-    login: string;
-    avatarUrl: string;
-  };
-}
-
 const REPOSITORY = gql`
   query Repository($owner: String!, $name: String!) {
     repository(owner: $owner, name: $name) {
@@ -28,6 +19,21 @@ const REPOSITORY = gql`
     }
   }
 `;
+interface RepositoryData {
+  repository: Repository;
+}
+interface Repository {
+  nameWithOwner: string;
+  description: string;
+  owner: {
+    login: string;
+    avatarUrl: string;
+  };
+}
+interface RepositoryVars {
+  owner: string;
+  name: string;
+}
 
 const Dashboard: React.FC = () => {
   const [newRepo, setNewRepo] = useState('');
@@ -39,7 +45,10 @@ const Dashboard: React.FC = () => {
     return storageRepositories ? JSON.parse(storageRepositories) : [];
   });
 
-  const [getRepository, { error, data }] = useLazyQuery(REPOSITORY);
+  const [getRepository, { error, data }] = useLazyQuery<
+    RepositoryData,
+    RepositoryVars
+  >(REPOSITORY);
 
   useEffect(() => {
     localStorage.setItem(
